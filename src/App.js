@@ -4,12 +4,14 @@ import {
   push,
   ref as databaseRef,
   set,
-  get,
+  remove,
+  onChildRemoved,
 } from "firebase/database";
 // ref : reference to the location in the  database. set-> for new value added. push -> new data to list. onChildAdded -> Everytime a child added to update our code to render on the screen.
 import {
   getDownloadURL,
-  uploadBytes,deleteObject,
+  uploadBytes,
+  deleteObject,
   ref as storageRef,
 } from "firebase/storage";
 // Getting storage reference and renaming as storageref
@@ -59,6 +61,15 @@ onChildAdded is when new message is added take the new message and add to the cu
         messages: [...state.messages, { key: data.key, val: data.val() }],
       }));
     });
+    onChildRemoved(messagesRef, (data) => {
+      let MessageArray = [...this.state.messages];
+      let NewMesssageArray = MessageArray.filter(
+        (item) => item.key !== data.key
+      );
+      this.setState({
+        messages: NewMesssageArray,
+      });
+    });
   }
   /*
 
@@ -90,10 +101,10 @@ onChildAdded is when new message is added take the new message and add to the cu
     console.log(this.state.fileInputFile);
     const storageRefInstance = storageRef(
       storage,
-      // Remove the slash from below. 
+      // Remove the slash from below.
       STORAGE_MESSAGES_KEY + this.state.fileInputFile.name
     );
-
+      console.log("Storage Ref Instance", storageRefInstance)
     // Part 2: This si the function to upload something online. Then we do something.
     uploadBytes(storageRefInstance, this.state.fileInputFile).then(
       (snapshot) => {
@@ -102,13 +113,15 @@ onChildAdded is when new message is added take the new message and add to the cu
 
         getDownloadURL(storageRefInstance).then((url) => {
           console.log(url);
+
           set(newMessageRef, {
             newMessageInput: this.state.newMessageInput,
             date: new Date().toLocaleString(),
             url: url,
+            ref: String(storageRefInstance),
           });
 
-          // Part 2: Setting the state after a successful upload. Once after upload it will reset the state. 
+          // Part 2: Setting the state after a successful upload. Once after upload it will reset the state.
           this.setState({
             newMessageInput: "",
             fileInputFile: null,
@@ -125,8 +138,31 @@ onChildAdded is when new message is added take the new message and add to the cu
       <div key={message.key}>
         <h6>
           {message.val.newMessageInput}-{message.val.date}
-          <div >
-            <img style={{height:"30vh"}} src={message.val.url} alt={message.val.name} />
+          <div>
+            <img
+              style={{ height: "30vh" }}
+              src={message.val.url}
+              alt={message.val.name}
+            />
+          </div>
+          <div>
+            <Button
+              variant="danger"
+              onClick={(e) => {
+                const ImagetoDeleteRef = storageRef(storage, message.val.ref);
+                console.log("Error", message.val.ref);
+                deleteObject(ImagetoDeleteRef).then(() =>
+                  console.log("Deleted?")
+                );
+                const itemToDelete = databaseRef(
+                  database,
+                  "messages/" + message.key
+                );
+                remove(itemToDelete).then(() => console.log("Success"));
+              }}
+            >
+              Delete
+            </Button>
           </div>
         </h6>
       </div>
