@@ -90,6 +90,7 @@ onChildAdded is when new message is added take the new message and add to the cu
       fileInputvalue: e.target.value,
     });
   };
+  // This portion is to handle delete function.
 
   // Note use of array fields syntax to avoid having to manually bind this method to the class
   handleSubmit = () => {
@@ -104,7 +105,7 @@ onChildAdded is when new message is added take the new message and add to the cu
       // Remove the slash from below.
       STORAGE_MESSAGES_KEY + this.state.fileInputFile.name
     );
-      console.log("Storage Ref Instance", storageRefInstance)
+    console.log("Storage Ref Instance", storageRefInstance);
     // Part 2: This si the function to upload something online. Then we do something.
     uploadBytes(storageRefInstance, this.state.fileInputFile).then(
       (snapshot) => {
@@ -150,7 +151,7 @@ onChildAdded is when new message is added take the new message and add to the cu
               variant="danger"
               onClick={(e) => {
                 const ImagetoDeleteRef = storageRef(storage, message.val.ref);
-                console.log("Error", message.val.ref);
+                console.log("Message Reference", message.val.ref);
                 deleteObject(ImagetoDeleteRef).then(() =>
                   console.log("Deleted?")
                 );
