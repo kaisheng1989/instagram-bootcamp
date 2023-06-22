@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/instagram-bootcamp/static/css/main.f249a49c.css",
-    "main.js": "/instagram-bootcamp/static/js/main.c3ae80b6.js",
+    "main.js": "/instagram-bootcamp/static/js/main.61378bd5.js",
     "static/media/logo.png": "/instagram-bootcamp/static/media/logo.e54ce6ab620f8c7135f3.png",
     "index.html": "/instagram-bootcamp/index.html",
     "main.f249a49c.css.map": "/instagram-bootcamp/static/css/main.f249a49c.css.map",
-    "main.c3ae80b6.js.map": "/instagram-bootcamp/static/js/main.c3ae80b6.js.map"
+    "main.61378bd5.js.map": "/instagram-bootcamp/static/js/main.61378bd5.js.map"
   },
   "entrypoints": [
     "static/css/main.f249a49c.css",
-    "static/js/main.c3ae80b6.js"
+    "static/js/main.61378bd5.js"
   ]
 }
