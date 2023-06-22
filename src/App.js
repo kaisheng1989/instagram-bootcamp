@@ -1,7 +1,19 @@
 import React from "react";
-import { onChildAdded, push, ref, set } from "firebase/database";
+import {
+  onChildAdded,
+  push,
+  ref as databaseRef,
+  set,
+  get,
+} from "firebase/database";
 // ref : reference to the location in the  database. set-> for new value added. push -> new data to list. onChildAdded -> Everytime a child added to update our code to render on the screen.
-import { database } from "./firebase";
+import {
+  getDownloadURL,
+  uploadBytes,deleteObject,
+  ref as storageRef,
+} from "firebase/storage";
+// Getting storage reference and renaming as storageref
+import { database, storage } from "./firebase";
 import logo from "./logo.png";
 import "./App.css";
 import Button from "react-bootstrap/Button";
@@ -13,15 +25,23 @@ import Col from "react-bootstrap/Col";
 // Save the Firebase message folder name as a constant to avoid bugs due to misspelling
 // Location on the database to store stuff.
 const DB_MESSAGES_KEY = "messages";
+// Part 2: Firebase Storage
+// Puting the slash here to make the code clean
+const STORAGE_MESSAGES_KEY = "messages/";
 
 class App extends React.Component {
   constructor(props) {
     super(props);
     // Initialise empty messages array in state to keep local state in sync with Firebase
     // When Firebase changes, update local state, which will update local UI
+
+    // Part 2: Increase the number of state to add file.
     this.state = {
       messages: [],
       newMessageInput: "",
+      // Part 2: Adding this two state to accept file and value.
+      fileInputFile: null,
+      fileInputvalue: "",
     };
   }
   /*messageRef is the location online where the data is stored.
@@ -29,7 +49,7 @@ onChildAdded is when new message is added take the new message and add to the cu
 
 */
   componentDidMount() {
-    const messagesRef = ref(database, DB_MESSAGES_KEY);
+    const messagesRef = databaseRef(database, DB_MESSAGES_KEY);
     // onChildAdded will return data for every child at the reference and every subsequent new child
     onChildAdded(messagesRef, (data) => {
       console.log(data);
@@ -49,15 +69,54 @@ onChildAdded is when new message is added take the new message and add to the cu
     });
   };
 
+  // Function to handle file changes.
+
+  handleFileChange = (e) => {
+    // This console log written in this manner will allow the file path to log into console. fileInputFile in the state below provide the path to the file.
+    console.log(e.target.value);
+    this.setState({
+      fileInputFile: e.target.files[0],
+      fileInputvalue: e.target.value,
+    });
+  };
+
   // Note use of array fields syntax to avoid having to manually bind this method to the class
   handleSubmit = () => {
-    const messageListRef = ref(database, DB_MESSAGES_KEY);
+    // Part 2:
+
+    const messageListRef = databaseRef(database, DB_MESSAGES_KEY);
     const newMessageRef = push(messageListRef);
-    set(newMessageRef, {
-      newMessageInput: this.state.newMessageInput,
-      date: new Date().toLocaleString(),
-    });
-    this.setState({ newMessageInput: "" });
+    // Part 2:
+    console.log(this.state.fileInputFile);
+    const storageRefInstance = storageRef(
+      storage,
+      // Remove the slash from below. 
+      STORAGE_MESSAGES_KEY + this.state.fileInputFile.name
+    );
+
+    // Part 2: This si the function to upload something online. Then we do something.
+    uploadBytes(storageRefInstance, this.state.fileInputFile).then(
+      (snapshot) => {
+        console.log(snapshot);
+        console.log("Upload Image");
+
+        getDownloadURL(storageRefInstance).then((url) => {
+          console.log(url);
+          set(newMessageRef, {
+            newMessageInput: this.state.newMessageInput,
+            date: new Date().toLocaleString(),
+            url: url,
+          });
+
+          // Part 2: Setting the state after a successful upload. Once after upload it will reset the state. 
+          this.setState({
+            newMessageInput: "",
+            fileInputFile: null,
+            fileInputvalue: "",
+          });
+        });
+      }
+    );
   };
 
   render() {
@@ -66,6 +125,9 @@ onChildAdded is when new message is added take the new message and add to the cu
       <div key={message.key}>
         <h6>
           {message.val.newMessageInput}-{message.val.date}
+          <div >
+            <img style={{height:"30vh"}} src={message.val.url} alt={message.val.name} />
+          </div>
         </h6>
       </div>
     ));
@@ -73,11 +135,22 @@ onChildAdded is when new message is added take the new message and add to the cu
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
-          {/* TODO: Add input field and add text input as messages in Firebase */}
-          {/*Input newly added. */}
+
+          {/*Part 2: Add an input to upload files.  */}
           <br />
           <input
-            class="rounded-pill"
+            className="rounded-pill bg-warning fs-3"
+            type="file"
+            value={this.state.fileInputvalue}
+            onChange={this.handleFileChange}
+            placeholder="Add a file here"
+          />
+
+          <br />
+          {/* TODO: Add input field and add text input as messages in Firebase */}
+          {/*Input newly added. */}
+          <input
+            className="rounded-pill"
             type="text"
             value={this.state.newMessageInput}
             onChange={this.handleChange}
@@ -91,9 +164,9 @@ onChildAdded is when new message is added take the new message and add to the cu
           <Container>
             <Row>
               <Col>
-                <p class="text-start fs-3 ">Messages:</p>
-                <div class="text-bg-warning p-3 rounded">
-                  <div class="text-start text-secondary fw-bold">
+                <p className="text-start fs-3 ">Messages and Pictures:</p>
+                <div className="text-bg-warning p-3 rounded">
+                  <div className="text-start text-secondary fw-bold">
                     {messageListItems}
                   </div>
                 </div>
