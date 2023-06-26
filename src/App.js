@@ -15,7 +15,14 @@ import {
   ref as storageRef,
 } from "firebase/storage";
 // Getting storage reference and renaming as storageref
-import { database, storage } from "./firebase";
+import { database, storage, auth } from "./firebase";
+// Part 3: Authentication
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
 import logo from "./logo.png";
 import "./App.css";
 import Button from "react-bootstrap/Button";
@@ -44,6 +51,11 @@ class App extends React.Component {
       // Part 2: Adding this two state to accept file and value.
       fileInputFile: null,
       fileInputvalue: "",
+      // Part 3: Authentication - Adding new state.
+      isLoggedIn: false,
+      email: "",
+      password: "",
+      user:""
     };
   }
   /*messageRef is the location online where the data is stored.
@@ -70,13 +82,72 @@ onChildAdded is when new message is added take the new message and add to the cu
         messages: NewMesssageArray,
       });
     });
+    // Part 3 Authentication - OnauthStateChange
+    // if the user is login in do these action. The state of isLoggedin is true.
+    // This portion is to listenning if we have a user logged in.
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("Current User:", user);
+        this.setState({
+          isLoggedIn: true,
+          user: user,
+        });
+      } else {
+        // If the user is not log in -> isLoggedIn will be set to false. User becomes an empty object.
+        this.setState({
+          isLoggedIn: false,
+          user: {},
+        });
+      }
+    });
   }
   /*
-
+  Part 3: Handling login 
 */
+  handleInput = (e) => {
+    const name = e.target.name;
+    const value = e.target.value;
+
+    this.setState({
+      [name]: value,
+    });
+  };
+
+  handleSignup = () => {
+    createUserWithEmailAndPassword(auth, this.state.email, this.state.password)
+      .then((userCred) => {
+        console.log("Success");
+        console.log(userCred);
+      })
+      .catch((error) => {
+        console.log("Error", error);
+      });
+  };
+
+  handleLogin = () => {
+    signInWithEmailAndPassword(auth, this.state.email, this.state.password)
+      .then((userCred) => {
+        console.log("Success");
+        console.log(userCred);
+      })
+      .catch((error) => {
+        console.log("Error", error);
+      });
+  };
+
   handleChange = (e) => {
     this.setState({
       newMessageInput: e.target.value,
+    });
+  };
+  //Handle Sign out
+  handleSignOut = () => {
+    signOut(auth).then(() => {
+      console.log("Sign out successful");
+      this.setState({
+        email: "",
+        password: "",
+      });
     });
   };
 
@@ -120,6 +191,7 @@ onChildAdded is when new message is added take the new message and add to the cu
             date: new Date().toLocaleString(),
             url: url,
             ref: String(storageRefInstance),
+            user: this.state.user.email
           });
 
           // Part 2: Setting the state after a successful upload. Once after upload it will reset the state.
@@ -140,6 +212,7 @@ onChildAdded is when new message is added take the new message and add to the cu
         <h6>
           {message.val.newMessageInput}-{message.val.date}
           <div>
+            <h4>{message.val.user}</h4>
             <img
               style={{ height: "30vh" }}
               src={message.val.url}
@@ -171,32 +244,74 @@ onChildAdded is when new message is added take the new message and add to the cu
     return (
       <div className="App">
         <header className="App-header">
+          {!this.state.isLoggedIn ? (
+            <div>
+              <label>Email:</label>
+              <input
+                value={this.state.email}
+                name="email"
+                type="text"
+                placeholder="Type in Email Here"
+                onChange={this.handleInput}
+              />
+
+              <label>Password:</label>
+              <input
+                value={this.state.password}
+                name="password"
+                type="text"
+                placeholder="Type in password Here"
+                onChange={this.handleInput}
+              />
+
+              <Button onClick={this.handleLogin} variant="warning">
+                Login
+              </Button>
+              <Button onClick={this.handleSignup} variant="warning">
+                SignUp
+              </Button>
+            </div>
+          ) : (
+            <div>
+              <Button onClick={this.handleSignOut} variant="warning">
+                Log Out!
+              </Button>
+            </div>
+          )}
+
+          <br />
           <img src={logo} className="App-logo" alt="logo" />
 
           {/*Part 2: Add an input to upload files.  */}
           <br />
-          <input
-            className="rounded-pill bg-warning fs-3"
-            type="file"
-            value={this.state.fileInputvalue}
-            onChange={this.handleFileChange}
-            placeholder="Add a file here"
-          />
 
-          <br />
-          {/* TODO: Add input field and add text input as messages in Firebase */}
-          {/*Input newly added. */}
-          <input
-            className="rounded-pill"
-            type="text"
-            value={this.state.newMessageInput}
-            onChange={this.handleChange}
-            placeholder="Type your message"
-          />
-          <br />
-          <Button onClick={this.handleSubmit} variant="warning">
-            Send
-          </Button>
+          {this.state.isLoggedIn ? (
+            <div>
+              <h2>Welcome Back {this.state.email}</h2>
+              <input
+                className="rounded-pill bg-warning fs-3"
+                type="file"
+                value={this.state.fileInputvalue}
+                onChange={this.handleFileChange}
+                placeholder="Add a file here"
+              />
+
+              <br />
+              {/* TODO: Add input field and add text input as messages in Firebase */}
+              {/*Input newly added. */}
+              <input
+                className="rounded-pill"
+                type="text"
+                value={this.state.newMessageInput}
+                onChange={this.handleChange}
+                placeholder="Type your message"
+              />
+              <br />
+              <Button onClick={this.handleSubmit} variant="warning">
+                Send
+              </Button>
+            </div>
+          ) : null}
           <br />
           <Container>
             <Row>
