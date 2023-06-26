@@ -6,6 +6,7 @@ import {
   set,
   remove,
   onChildRemoved,
+  
 } from "firebase/database";
 // ref : reference to the location in the  database. set-> for new value added. push -> new data to list. onChildAdded -> Everytime a child added to update our code to render on the screen.
 import {
@@ -31,10 +32,11 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 
+
 const DB_MESSAGES_KEY = "messages";
 const STORAGE_MESSAGES_KEY = "messages/";
 
-function App() {
+function Hook() {
   const [messages, setMessages] = useState([]);
   const [newMessageInput, setNewMessageInput] = useState("");
   const [fileInputFile, setFileInputFile] = useState(null);
@@ -265,4 +267,4 @@ function App() {
   );
 }
 
-export default App;
+export default Hook;
