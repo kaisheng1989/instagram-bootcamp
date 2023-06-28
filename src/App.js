@@ -88,7 +88,7 @@ function RequireAuth({ children, redirectTo, user }) {
         <Navbar handleSignOut={handleSignOut} user={user} />
         <Routes>
           {/* Setting the local host 300 main page. */}
-          <Route path="/" element={<Welcome />} />
+          <Route path="/instagram-bootcamp/" element={<Welcome />} />
 
           {/*Login in component */}
           <Route
